@@ -1,5 +1,5 @@
 from discord.ext import commands
-import laxative, tweepy, html, urllib.request, os
+import laxative, tweepy, html, urllib.request, os, requests, bs4, re
 
 dir_pics = os.path.join(os.getcwd(), 'files', 'twitter_pics')
 
@@ -60,6 +60,39 @@ class Twitter:
         status = self.parse_input(id_status)
         await self.post(status)
 
+    @commands.command(pass_context=True)
+    async def url(self, ctx, id_status:str):
+        await self.bot.delete_message(ctx.message)
+        status = self.parse_input(id_status)
+
+        for url in status.entities['urls']:
+            await self.bot.say(url['expanded_url'])
+
+    @commands.command(pass_context=True)
+    async def insta(self, ctx, link:str):
+        await self.bot.delete_message(ctx.message)
+        await self.bot.say(self.get_insta(link))
+
+    def get_insta(self, insta_link: str):
+        r = requests.get(insta_link)
+        html = r.content
+        soup = bs4.BeautifulSoup(html, 'html.parser')
+        food = soup.find_all('meta')
+        link = ''
+        for item in food:
+            try:
+                if item['property'] == 'og:image':
+                    link = item['content']
+                    link = link.split('?ig_cache_key')[0]
+                if item['property'] == 'og:video':
+                    link = item['content']
+            except AttributeError:
+                pass
+            except KeyError:
+                pass
+
+        return link
+
     def parse_input(self, id_status):
         id = id_status.split('/')
         status = self.api.get_status(id[len(id) - 1])
@@ -79,16 +112,6 @@ class Twitter:
                     urllib.request.urlretrieve(link, full)
 
                 fnames.append(full)
-            """
-            for media in status.extended_entities['media']:
-                print(media['media_url'])
-                fname = media['media_url'].split('/')
-                full = os.path.join(dir_pics, folder, fname[len(fname) - 1])
-                if not os.path.exists(full):
-                    urllib.request.urlretrieve(media['media_url'], full)
-
-                fnames.append(full)
-            """
         except AttributeError:
             pass
 
@@ -116,22 +139,28 @@ class Twitter:
     def get_links(self, status):
         links = []
         try:
-            for media in status.extended_entities['media']:
-                if not media['type'] == 'video':
-                    links.append(media['media_url'])
-                else:
-                    videos = media['video_info']['variants']
-                    bitrate = 0
-                    index = 0
-                    for i in range(0, len(videos)):
-                        if videos[i]['content_type'] == 'video/mp4':
-                            br = int(videos[i]['bitrate'])
-                            print(br)
-                            if br > bitrate:
-                                bitrate = br
-                                index = i
+            if hasattr(status, 'extended_entities') and 'media' in status.extended_entities.keys():
+                for media in status.extended_entities['media']:
+                    if not media['type'] == 'video':
+                        links.append(media['media_url'])
+                    else:
+                        videos = media['video_info']['variants']
+                        bitrate = 0
+                        index = 0
+                        for i in range(0, len(videos)):
+                            if videos[i]['content_type'] == 'video/mp4':
+                                br = int(videos[i]['bitrate'])
+                                print(br)
+                                if br > bitrate:
+                                    bitrate = br
+                                    index = i
 
-                    links.append(videos[index]['url'])
+                        links.append(videos[index]['url'])
+            else:
+                for link in status.entities['urls']:
+                    ext = link['expanded_url']
+                    if ext.find('www.instagram.com') != -1:
+                        links.append(self.get_insta(ext))
         except AttributeError:
             pass
 
