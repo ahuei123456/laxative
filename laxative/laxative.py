@@ -3,7 +3,7 @@ import os, json
 
 information = 'Laxatives'
 
-extensions = {'cogs.twitter', 'cogs.administrative'}
+extensions = {'cogs.twitter', 'cogs.discord'}
 bot = commands.Bot(description=information, self_bot=True, command_prefix=commands.when_mentioned_or('$'))
 
 
