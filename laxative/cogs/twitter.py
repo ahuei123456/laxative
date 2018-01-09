@@ -1,5 +1,6 @@
 from discord.ext import commands
-import laxative, tweepy, html, urllib.request, os, requests, bs4, re, discordutils, twitutils, linkutils
+import laxative, tweepy, html, urllib.request, os, requests, bs4, re
+from seiutils import discordutils, twitutils, linkutils
 
 dir_pics = os.path.join(os.path.expanduser('~'), 'Pictures', 'twitter_pics')
 
@@ -75,7 +76,7 @@ class Twitter:
         """
         await self.bot.delete_message(ctx.message)
         status = self.parse_input(id_status)
-        #await self.post(status)
+        await self.post(status)
 
     @commands.command(pass_context=True)
     async def url(self, ctx, id_status:str):
@@ -102,9 +103,15 @@ class Twitter:
         status = self.parse_input(id_status)
         await self.bot.say(embed=discordutils.encode_status(status))
 
+    @commands.command(pass_context=True)
+    async def staff(self, ctx, id_status:str):
+        await self.bot.delete_message(ctx.message)
+        status = self.parse_input(id_status)
+        print(twitutils.get_category(status))
+
     def parse_input(self, id_status):
         id = id_status.split('/')
-        status = self.api.get_status(id[len(id) - 1])
+        status = self.api.get_status(id[len(id) - 1], tweet_mode='extended')
         return status
 
     def download(self, status):
@@ -143,6 +150,9 @@ class Twitter:
                 await self.bot.upload(fp=item)
             except Exception:
                 pass
+
+    async def post(self, status):
+        await self.bot.say(embed=discordutils.encode_status(status))
 
 
 def setup(bot):

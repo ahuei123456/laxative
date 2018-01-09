@@ -1,7 +1,8 @@
 from discord.ext import commands
 from discord.errors import Forbidden, HTTPException
 
-import asyncio, os, urllib.request, laxative, random, discord, datetime, unicodedata
+import asyncio, os, urllib.request, laxative, random, discord, datetime
+import unicodedata
 
 dir_avatars = os.path.join(os.path.expanduser('~'), 'Pictures', 'Discord', 'avatars')
 emoji_str = 'regional_indicator_{}'
@@ -16,19 +17,22 @@ class Discord:
     async def kick(self, ctx):
         try:
             user = ctx.message.mentions[0]
+            await self.bot.kick(user)
+            await self.bot.say("Kicked {}".format(user.name))
         except IndexError:
             return
-
-        await self.bot.say("Kicked {}".format(user.name))
 
     @commands.command(pass_context=True, no_pm=True)
     async def ban(self, ctx):
         try:
             user = ctx.message.mentions[0]
+            await self.bot.ban(user)
+            await self.bot.say("Banned {}".format(user.name))
         except IndexError:
             return
+        except Forbidden:
+            return
 
-        await self.bot.say("Banned {}".format(user.name))
 
     @commands.command(name='cloneuser', pass_context=True, no_pm=True, aliases=['clone'])
     async def clone(self, ctx, *, name=None):

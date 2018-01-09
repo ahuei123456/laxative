@@ -4,7 +4,7 @@ import os, json
 information = 'Laxatives'
 
 extensions = {'cogs.twitter', 'cogs.discord'}
-bot = commands.Bot(description=information, self_bot=True, command_prefix=commands.when_mentioned_or('$'))
+bot = commands.Bot(description=information, self_bot=False, command_prefix=commands.when_mentioned_or('$'))
 
 
 def load_credentials():
@@ -20,9 +20,8 @@ if __name__ == "__main__":
         bot.load_extension(extension)
 
     token = credentials['discord']['token']
-
     while True:
         try:
-            bot.run(token, bot=False)
+            bot.run(token, bot=True)
         except Exception:
             pass
